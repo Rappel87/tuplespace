@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="GroboUtils-5-core">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/libs/GroboUtils-5-core.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
