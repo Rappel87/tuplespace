@@ -6,50 +6,58 @@ public class ChatListener {
 
     private TupleSpace t;
     private String channel;
+    private int currentMsgId;
 
     public ChatListener(String channel, TupleSpace t) {
         this.channel = channel;
         this.t = t;
+        this.currentMsgId = Integer.parseInt(t.read("channel",channel,null ,null, null, null, null)[ChatServer.FIRST_MSG_ID]);
     }
 
+    // channel : channelStatus, channelName, firstMsgId, lastMsgId, messageCount, isFull/isNotFull, countListeners
+    // message : messageStatus, channelName, messageId, messageContent, readCount
 	public String getNextMessage() {
-        String[] message_tuple = this.t.get("message", this.channel, null, null);
-        String[] channel_tuple = this.t.get("channel",this.channel,null,null);
+        // may be deadlock
+        // TO DO : try to first get channel tuple and then message tuple
+        String[] messageTuple = this.t.get("message", this.channel,Integer.toString(currentMsgId), null, null);
+        String[] channelTuple = this.t.get("channel",this.channel,null,null,null,null,null);
 
-        int msg_count = Integer.parseInt(channel_tuple[2]);
-        System.out.println("get next message : count"+ msg_count +" value : "+message_tuple[3]);
+        int msgCount = Integer.parseInt(channelTuple[ChatServer.MSG_CNT]);
+        System.out.println("get next message : count"+ msgCount +" value : "+messageTuple[ChatServer.READ_CNT]);
 
 
-        int read = Integer.parseInt(message_tuple[2]);
-        String message = message_tuple[3];
+        int read = Integer.parseInt(messageTuple[ChatServer.READ_CNT]);
+        String message = messageTuple[ChatServer.MSG];
        // System.out.println("get message "+ channel +" : "+ message);
         if (read > 1) {
-            message_tuple[2] = Integer.toString(read-1);
-            t.put(message_tuple);
+            messageTuple[ChatServer.READ_CNT] = Integer.toString(read-1);
+            t.put(messageTuple);
         }
-        else
-            channel_tuple[2] = Integer.toString(msg_count-1);
-        this.t.put(channel_tuple);
+        else {
+            //message is removed because everybody has read it
+            channelTuple[ChatServer.MSG_CNT] = Integer.toString(msgCount-1);
+            channelTuple[ChatServer.FIRST_MSG_ID] = Integer.toString(Integer.parseInt(channelTuple[ChatServer.FIRST_MSG_ID])+1);
+        }
+        this.t.put(channelTuple);
         return message;
     }
 
 	public void closeConnection() {
-        String[] chann_tuple = t.get("channel",channel,null,null);
-        int msg_count = Integer.parseInt(chann_tuple[2]);
-        int msg_listener = Integer.parseInt(chann_tuple[3])-1;
-        chann_tuple[3] = Integer.toString(msg_listener);
-        System.out.println(msg_count);
+        int msgCount, msgListener,firstMsgId;
+        String[] channTuple = t.get("channel",channel,null,null,null,null,null);
+        msgCount = Integer.parseInt(channTuple[ChatServer.MSG_CNT]);
+        msgListener = Integer.parseInt(channTuple[ChatServer.LISTENER_CNT]);
+        firstMsgId = Integer.parseInt(channTuple[ChatServer.FIRST_MSG_ID]);
+        channTuple[ChatServer.LISTENER_CNT] = Integer.toString(msgListener-1);
+        System.out.println(msgCount);
 
         // update message reader_count
-        String[][] messages = new String[msg_count][4];
-        for (int i=0; i<msg_count;i++) {
-            messages[i] = t.get("message",channel,null,null);
-            System.out.println(" close connection :"+messages[i][2]);
+        String[] message = new String[5];
+        for (int i=firstMsgId; i<firstMsgId+msgCount;i++) {
+            message = t.get("message",channel,Integer.toString(i),null,null);
+            message[ChatServer.READ_CNT] = Integer.toString(Integer.parseInt(message[ChatServer.READ_CNT]) - 1);
+            t.put(message);
         }
-        for (int i=0; i<msg_count;i++) {
-            messages[i][2] = Integer.toString(Integer.parseInt(messages[i][2]) - 1);
-            t.put(messages[i]);
-        }
-        t.put(chann_tuple);
+        t.put(channTuple);
     }
 }
