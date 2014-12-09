@@ -29,25 +29,43 @@ public class ChatServer {
 	}
 
 	public void writeMessage(String channel, String message) {
-        String[] chann_tuple = t.read("channel", channel, null,null);
+        System.out.println("write message "+ channel +" : "+ message);
+        String[] chann_tuple = t.get("channel", channel, null, null);
         int msg_count = Integer.parseInt(chann_tuple[2]);
         int nbr_listener = Integer.parseInt(chann_tuple[3]);
         if ( msg_count >= rows)
-            //delete one message to not exceed rows limit, buffer to handler later
+        //delete one message to not exceed rows limit, buffer to handler later
             t.get("message",channel,null,null);
-        else {
-            t.get("channel",channel,null,null);
-            t.put("channel", channel, Integer.toString(msg_count + 1),Integer.toString(nbr_listener));
-        }
+        else
+            msg_count++;
         t.put("message",channel,Integer.toString(nbr_listener),message);
+        t.put("channel", channel, Integer.toString(msg_count),Integer.toString(nbr_listener));
+
 	}
 
 	public ChatListener openConnection(String channel) {
         String[] chann_tuple = t.get("channel",channel,null,null);
+        //update channel listener
+        int msg_count = Integer.parseInt(chann_tuple[2]);
         int msg_listener = Integer.parseInt(chann_tuple[3])+1;
         chann_tuple[3] = Integer.toString(msg_listener);
-        t.put(chann_tuple);
+
+        // update messages read_count
+        System.out.println("message_count" + msg_count);
+        String[][] messages = new String[msg_count][4];
+        for (int i=0; i<msg_count;i++) {
+            messages[i] = t.get("message",channel,null,null);
+            System.out.println(" open connection :"+messages[i][2]);
+        }
+        for (int i=0; i<msg_count;i++) {
+            messages[i][2] = Integer.toString((Integer.parseInt(messages[i][2])) + 1);
+            t.put(messages[i]);
+        }
+
         ChatListener listener = new ChatListener(channel, this.t);
+        t.put(chann_tuple);
+
+
         return listener;
 	}
 }
