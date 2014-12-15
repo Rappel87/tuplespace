@@ -17,6 +17,8 @@ public class ChatListener {
   // channel : channelStatus, channelName, firstMsgId, lastMsgId, messageCount, isFull/isNotFull, countListeners
   // message : messageStatus, channelName, messageId, messageContent, readCount
   public String getNextMessage() {
+    int msgCount, readCount;
+    String message;
     String[] channelTuple = null;
     String[] messageTuple = null;
     // may be deadlock
@@ -27,31 +29,33 @@ public class ChatListener {
       System.out.println ("CL - read: Chan: " + channel + " ID: " + Integer.toString (this.currentMsgId));
     }
     messageTuple = this.t.get("message", this.channel, Integer.toString (this.currentMsgId), null, null);
-    if (ChatServer.DEBUG > 0)
-    {
-      System.out.println ("CL - fetched: Chan: " + channel + " ID: " + Integer.toString (this.currentMsgId));
-    }
     channelTuple = this.t.get("channel",this.channel,null,null,null,null,null);
 
+    msgCount = Integer.parseInt(channelTuple[ChatServer.MSG_CNT]);
+    readCount = Integer.parseInt(messageTuple[ChatServer.READ_CNT]);
 
-    int msgCount = Integer.parseInt(channelTuple[ChatServer.MSG_CNT]);
-    System.out.println("get next message : count"+ msgCount +" value : "+messageTuple[ChatServer.READ_CNT]);
-
-
-    int read = Integer.parseInt(messageTuple[ChatServer.READ_CNT]);
-    String message = messageTuple[ChatServer.MSG];
+    if (ChatServer.DEBUG > 0)
+    {
+      System.out.println ("CL - fetched: Chan: " + channel + " ID: " + Integer.toString (this.currentMsgId) +
+          " readCount:" + readCount + " msgCount:" + msgCount);
+    }
+    message = messageTuple[ChatServer.MSG];
     // System.out.println("get message "+ channel +" : "+ message);
     this.currentMsgId++;
-    if (read > 1) {
-      messageTuple[ChatServer.READ_CNT] = Integer.toString(read-1);
+
+    if (readCount > 1) {
+      messageTuple[ChatServer.READ_CNT] = Integer.toString(readCount - 1);
       t.put(messageTuple);
     }
     else {
       //message is removed because everybody has read it
       channelTuple[ChatServer.MSG_CNT] = Integer.toString(msgCount-1);
       channelTuple[ChatServer.FIRST_MSG_ID] = Integer.toString(Integer.parseInt(channelTuple[ChatServer.FIRST_MSG_ID])+1);
+      channelTuple[ChatServer.IS_FULL] = ChatServer.IS_NOT_FULL_TXT;
     }
+
     this.t.put(channelTuple);
+
     return message;
   }
 

@@ -28,8 +28,6 @@ public class ChatServer {
   protected final static int MSG = 3;
   protected final static int READ_CNT = 4;
 
-
-
   // channel : channelStatus, channelName, firstMsgId, lastMsgId, messageCount, isFull/isNotFull, countListeners
   // message : messageStatus, channelName, messageId, messageContent, readCount
   //(identifier,channel name, nbr listener, msg count);
@@ -42,12 +40,16 @@ public class ChatServer {
     StringBuilder sb = new StringBuilder();
     for (String channel: channelNames) {
       t.put("channel",channel, FIRST_MESSAGE_ID, Integer.toString(0), Integer.toString(0), IS_NOT_FULL_TXT, Integer.toString(0));
-      t.put ("capacity", Integer.toString (rows));
       sb.append(channel);
       sb.append('\0');
+      
+      t.put ("capacity", Integer.toString (rows));
+      t.put ("currentMsgId", channel, FIRST_MESSAGE_ID);
     }
 
     t.put("channelsList", sb.toString());
+    
+    
   }
 
   public ChatServer(TupleSpace t) {
@@ -64,7 +66,7 @@ public class ChatServer {
   }
 
   public void writeMessage(String channel, String message) {
-    int msg_count, lastMsgId, nbr_listener, firstMsgId, readCnt;
+    int msg_count, lastMsgId, nbr_listener, firstMsgId, readCnt = 0;
     String [] firstMessage = null;
     String[] chann_tuple = null;
     
@@ -75,7 +77,7 @@ public class ChatServer {
     firstMsgId = Integer.parseInt(chann_tuple[FIRST_MSG_ID]);
     lastMsgId = Integer.parseInt(chann_tuple[LAST_MSG_ID]);
     nbr_listener = Integer.parseInt(chann_tuple[LISTENER_CNT]);
-
+    
     lastMsgId++;
 
     if (DEBUG > 0)
@@ -106,6 +108,7 @@ public class ChatServer {
       else
       {
         msg_count++;
+        t.put (firstMessage);
         /* the channel is now full and we can't remove a message */
         t.put("channel", channel, chann_tuple[FIRST_MSG_ID], Integer.toString(lastMsgId), Integer.toString(msg_count),
             IS_FULL_TXT,Integer.toString(nbr_listener));
@@ -144,10 +147,11 @@ public class ChatServer {
     }
     System.out.println ("Finished looping");
 
-    t.put(chann_tuple);
     ChatListener listener = new ChatListener(channel, this.t, firstMsgId);
-    System.out.println ("Created Chat Listener");
-
+    System.out.println ("Created Chat Listener on channel: " + channel);
+    
+    t.put(chann_tuple);
     return listener;
   }
+  
 }
