@@ -28,8 +28,10 @@ public class ChatListener {
     {
       System.out.println ("CL - read: Chan: " + channel + " ID: " + Integer.toString (this.currentMsgId));
     }
-    messageTuple = this.t.get("message", this.channel, Integer.toString (this.currentMsgId), null, null);
+    this.t.read("message", this.channel, Integer.toString (this.currentMsgId), null, null);
     channelTuple = this.t.get("channel",this.channel,null,null,null,null,null);
+
+    messageTuple = this.t.get("message", this.channel, Integer.toString (this.currentMsgId), null, null);
 
     msgCount = Integer.parseInt(channelTuple[ChatServer.MSG_CNT]);
     readCount = Integer.parseInt(messageTuple[ChatServer.READ_CNT]);
@@ -47,12 +49,16 @@ public class ChatListener {
       messageTuple[ChatServer.READ_CNT] = Integer.toString(readCount - 1);
       t.put(messageTuple);
     }
-    else {
+    else if (readCount == 1) {
       //message is removed because everybody has read it
       channelTuple[ChatServer.MSG_CNT] = Integer.toString(msgCount-1);
       channelTuple[ChatServer.FIRST_MSG_ID] = Integer.toString(Integer.parseInt(channelTuple[ChatServer.FIRST_MSG_ID])+1);
       channelTuple[ChatServer.IS_FULL] = ChatServer.IS_NOT_FULL_TXT;
     }
+    else {
+        System.out.println("ERROR : readCount negative or null: "+readCount);
+    }
+
 
     this.t.put(channelTuple);
 
@@ -70,10 +76,11 @@ public class ChatListener {
 
     // update message reader_count
     String[] message = new String[5];
-    for (int i=firstMsgId; i<firstMsgId+msgCount;i++) {
+    for (int i=currentMsgId; i<msgCount-currentMsgId;i++) {
       message = t.get("message",channel,Integer.toString(i),null,null);
       message[ChatServer.READ_CNT] = Integer.toString(Integer.parseInt(message[ChatServer.READ_CNT]) - 1);
-      t.put(message);
+      if (Integer.parseInt(message[ChatServer.READ_CNT]) > 0)
+        t.put(message);
     }
     t.put(channTuple);
   }

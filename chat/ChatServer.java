@@ -86,7 +86,7 @@ public class ChatServer {
     }
 
     t.put("message",channel, Integer.toString(lastMsgId) ,message, Integer.toString(nbr_listener));
-    if (msg_count < rows) /*  */
+    if (msg_count < (rows -1)) /*  */
     {
       msg_count++;
       t.put("channel", channel, chann_tuple[FIRST_MSG_ID], Integer.toString(lastMsgId), Integer.toString(msg_count),
@@ -96,9 +96,9 @@ public class ChatServer {
     {
       firstMessage = t.get("message", channel, Integer.toString (firstMsgId), null, null);
       readCnt = Integer.parseInt (firstMessage[READ_CNT]);
-      
+
       /* Check if we can remove a message */
-      if (readCnt == 0)
+      if (readCnt <= 0)
       {
         /* CS - remove a message - don't need to push it back */
         chann_tuple[FIRST_MSG_ID] = Integer.toString(firstMsgId + 1);
@@ -111,7 +111,7 @@ public class ChatServer {
         t.put (firstMessage);
         /* the channel is now full and we can't remove a message */
         t.put("channel", channel, chann_tuple[FIRST_MSG_ID], Integer.toString(lastMsgId), Integer.toString(msg_count),
-            IS_FULL_TXT,Integer.toString(nbr_listener));
+           IS_FULL_TXT,Integer.toString(nbr_listener));
       }
 
     }

@@ -26,7 +26,7 @@ public class ChatBasicTest extends TestCase {
 		cs = null;
 	}
 
-	public static final int PHASES = 5;
+	public static final int PHASES = 1;
 
 	public void testLogContents() throws Throwable {
 		TestRunnable tct[] = new TestRunnable[2];

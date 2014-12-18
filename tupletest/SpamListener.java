@@ -42,6 +42,7 @@ public class SpamListener extends TestRunnable {
 			if (((i % spammers) == 0) && ctr != null)
 				ctr.resetWatchdog();
 		}
+        System.out.println("ALL MESSAGES READ ON CHANNEL "+this.channel);
 		System.err.println(this + " done listening.");
 		cl.closeConnection();
 		System.err.println(this + " closed connection.");
