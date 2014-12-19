@@ -1,16 +1,12 @@
 package chat;
 
-import tupleserver.TupleProxy;
 import tuplespaces.TupleSpace;
-
-import java.util.HashMap;
 
 public class ChatServer {
   // Add stuff here.
   private TupleSpace t;
   private int rows;
-  private String[] channelNames;
-  protected final static int DEBUG = 1;
+  protected final static boolean DEBUG = false;
   //tuple identifier
   //common
   protected final static int CHAN_NAME = 1;
@@ -36,7 +32,6 @@ public class ChatServer {
   public ChatServer(TupleSpace t, int rows, String[] channelNames) {
     this.t = t;
     this.rows = rows;
-    this.channelNames = channelNames;
     StringBuilder sb = new StringBuilder();
     for (String channel: channelNames) {
       t.put("channel",channel, FIRST_MESSAGE_ID, Integer.toString(0), Integer.toString(0), IS_NOT_FULL_TXT, Integer.toString(0));
@@ -44,12 +39,9 @@ public class ChatServer {
       sb.append('\0');
       
       t.put ("capacity", Integer.toString (rows));
-      t.put ("currentMsgId", channel, FIRST_MESSAGE_ID);
     }
 
     t.put("channelsList", sb.toString());
-    
-    
   }
 
   public ChatServer(TupleSpace t) {
@@ -80,13 +72,13 @@ public class ChatServer {
     
     lastMsgId++;
 
-    if (DEBUG > 0)
+    if (DEBUG)
     {
       System.out.println ("CS - try to write: Chan: " + channel + " ID: " + Integer.toString (lastMsgId) + " Message: " + message);
     }
 
     t.put("message",channel, Integer.toString(lastMsgId) ,message, Integer.toString(nbr_listener));
-    if (msg_count < (rows -1)) /*  */
+    if (msg_count < rows) /*  */
     {
       msg_count++;
       t.put("channel", channel, chann_tuple[FIRST_MSG_ID], Integer.toString(lastMsgId), Integer.toString(msg_count),
@@ -116,7 +108,7 @@ public class ChatServer {
 
     }
 
-    if (DEBUG > 0)
+    if (DEBUG)
     {
       System.out.println ("CS - finished writing: Chan: " + channel + " ID: " + Integer.toString (lastMsgId) + " Message: " + message);
     }
@@ -125,12 +117,11 @@ public class ChatServer {
 
   public ChatListener openConnection(String channel) {
     //channelStatus, channelName, firstMsgId, lastMsgId, messageCount, isFull/isNotFull, countListeners
-    int msgCount, msgListener, firstMsgId, LastMsgId;
+    int msgCount, msgListener, firstMsgId;
     String[] message  = new String[5];
     String[] chann_tuple = null;
     
     chann_tuple = t.get("channel",channel, null, null, null,null,null);
-    System.out.println ("Fetched channel status");
     //update channel listener
     msgCount = Integer.parseInt(chann_tuple[MSG_CNT]);
     firstMsgId = Integer.parseInt(chann_tuple[FIRST_MSG_ID]);
@@ -138,17 +129,17 @@ public class ChatServer {
     chann_tuple[LISTENER_CNT] = Integer.toString(msgListener);
 
     // update messages read_count
-    System.out.println("message_count: " + msgCount);
     for (int i=firstMsgId; i<firstMsgId+msgCount;i++) {
-      System.out.println ("Looping");
       message = t.get("message",channel,Integer.toString(i),null,null);
       message[READ_CNT] = Integer.toString(Integer.parseInt(message[READ_CNT]) + 1);
       t.put(message);
     }
-    System.out.println ("Finished looping");
 
     ChatListener listener = new ChatListener(channel, this.t, firstMsgId);
-    System.out.println ("Created Chat Listener on channel: " + channel);
+    if (DEBUG)
+    {
+      System.out.println ("Created Chat Listener on channel: " + channel);
+    }
     
     t.put(chann_tuple);
     return listener;

@@ -1,12 +1,7 @@
 package tuplespaces;
 
-import tupleserver.TupleProxy;
-
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class LocalTupleSpace implements TupleSpace {
   // Add stuff here.

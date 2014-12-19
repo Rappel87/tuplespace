@@ -10,7 +10,6 @@ public class ChatSpamTestLite extends ChatSpamTest {
 
 	public void testSpamFlood() throws Throwable {
 		executeSpamFlood(4, 4, SPAM_MESSAGES);
-        //executeSpamFlood(4, 4, 30);
 	}
 
 	public static void main(String[] args) {

@@ -24,7 +24,7 @@ public class ChatListener {
     // may be deadlock
     // TO DO : try to first get channel tuple and then message tuple
 
-    if (ChatServer.DEBUG > 0)
+    if (ChatServer.DEBUG)
     {
       System.out.println ("CL - read: Chan: " + channel + " ID: " + Integer.toString (this.currentMsgId));
     }
@@ -36,13 +36,12 @@ public class ChatListener {
     msgCount = Integer.parseInt(channelTuple[ChatServer.MSG_CNT]);
     readCount = Integer.parseInt(messageTuple[ChatServer.READ_CNT]);
 
-    if (ChatServer.DEBUG > 0)
+    if (ChatServer.DEBUG)
     {
       System.out.println ("CL - fetched: Chan: " + channel + " ID: " + Integer.toString (this.currentMsgId) +
           " readCount:" + readCount + " msgCount:" + msgCount);
     }
     message = messageTuple[ChatServer.MSG];
-    // System.out.println("get message "+ channel +" : "+ message);
     this.currentMsgId++;
 
     if (readCount > 1) {
@@ -56,7 +55,7 @@ public class ChatListener {
       channelTuple[ChatServer.IS_FULL] = ChatServer.IS_NOT_FULL_TXT;
     }
     else {
-        System.out.println("ERROR : readCount negative or null: "+readCount);
+        System.err.println("ERROR : readCount negative or null: "+readCount);
     }
 
 
@@ -66,13 +65,12 @@ public class ChatListener {
   }
 
   public void closeConnection() {
-    int msgCount, msgListener,firstMsgId;
+    int msgCount, msgListener;
     String[] channTuple = t.get("channel",channel,null,null,null,null,null);
     msgCount = Integer.parseInt(channTuple[ChatServer.MSG_CNT]);
     msgListener = Integer.parseInt(channTuple[ChatServer.LISTENER_CNT]);
-    firstMsgId = Integer.parseInt(channTuple[ChatServer.FIRST_MSG_ID]);
+
     channTuple[ChatServer.LISTENER_CNT] = Integer.toString(msgListener-1);
-    System.out.println(msgCount);
 
     // update message reader_count
     String[] message = new String[5];
